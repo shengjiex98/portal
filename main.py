@@ -10,15 +10,7 @@ from adafruit_matrixportal.matrixportal import MatrixPortal
 
 def init():
     matrixportal = MatrixPortal(status_neopixel=board.NEOPIXEL, debug=True)
-
-    # Get wifi details and more from a credentials.py file
-    try:
-        from credentials import credentials
-    except ImportError:
-        print("WiFi secrets are kept in credentials.py, please add them there!")
-        raise
-
-    matrixportal.network.connect(credentials)
+    matrixportal.network.connect()
 
     matrixportal.add_text(
         text_font=terminalio.FONT,
