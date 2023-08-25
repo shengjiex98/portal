@@ -7,50 +7,52 @@ import terminalio
 from adafruit_matrixportal.matrixportal import MatrixPortal
 
 def init():
-    while True:
-        try:
-            # Display setup
-            matrixportal = MatrixPortal(status_neopixel=board.NEOPIXEL, debug=True)
-            matrixportal.network.connect()
-            break
-        except:
-            print('Connection failed, retrying in 10 sec')
-            time.sleep(10)
-    
-    print('Connected to WiFi')
-
+    matrixportal = MatrixPortal(status_neopixel=board.NEOPIXEL, debug=True)
     matrixportal.add_text(
         text_font=terminalio.FONT,
         text_position=(2, (matrixportal.graphics.display.height // 2) - 1),
         scrolling=False
     )
 
+    while True:
+        try:
+            # Display setup
+            display(matrixportal, 'Connecting')
+            matrixportal.network.connect()
+            break
+        except Exception as error:
+            display(matrixportal, 'Connect Error')
+            print(error)
+            time.sleep(10)
+    print('Connected to WiFi')
+
     return matrixportal
 
-def display(matrixportal, text, delay):
+def display(matrixportal, text, color='#808080', delay=None):
     matrixportal.set_text(text)
-    matrixportal.set_text_color('#808080')
-    matrixportal.scroll_text(delay)
+    matrixportal.set_text_color(color)
+    if delay:
+        matrixportal.scroll_text(delay)
 
 def fetch_text(matrixportal, url):
     try:
         r = matrixportal.network.requests.get(url)
         text = r.text
         r.close()
+        return text
     except Exception as error:
+        display(matrixportal, 'Text Error')
         print(error)
-
-    return text
 
 def fetch_json(matrixportal, url):
     try:
         r = matrixportal.network.requests.get(url)
         json = r.json()
         r.close()
+        return json
     except Exception as error:
+        display(matrixportal, 'JSON Error')
         print(error)
-
-    return json
 
 def parse_api(xml_string):
     minutes_list = []
@@ -96,7 +98,6 @@ def predict_jfx(current_time):
     return next_time
 
 def main():
-    DELAY = 0.1
     API_CM = "https://retro.umoiq.com/service/publicXMLFeed?command=predictions&a=chapel-hill&r=CM&s=autoldf_n"
     API_TIME = "http://worldtimeapi.org/api/timezone/America/New_York"
 
@@ -108,6 +109,7 @@ def main():
                 print('Connection failed, reconnecting...')
                 mp.network.connect()
         except Exception as error:
+            display(mp, 'Connect Error')
             print(error)
 
         current_time = fetch_json(mp, API_TIME)['datetime']
@@ -115,14 +117,14 @@ def main():
 
         if current_time < 6 * 60 + 30 or current_time > 22 * 60:
             # Nightmode
-            display(mp, '', DELAY)
+            display(mp, '')
         else:
             xml_string = fetch_text(mp, API_CM)
             predictions_cm = parse_api(xml_string)
             predictions_jfx = predict_jfx(current_time)
 
             text_to_display = f"CM  {predictions_cm}\nJFX {predictions_jfx}"
-            display(mp, text_to_display, DELAY)
+            display(mp, text_to_display)
 
         time.sleep(30)
 
