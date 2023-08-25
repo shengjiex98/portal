@@ -98,34 +98,43 @@ def predict_jfx(current_time):
     return next_time
 
 def main():
-    API_CM = "https://retro.umoiq.com/service/publicXMLFeed?command=predictions&a=chapel-hill&r=CM&s=autoldf_n"
-    API_TIME = "http://worldtimeapi.org/api/timezone/America/New_York"
+    try:
+        API_CM = "https://retro.umoiq.com/service/publicXMLFeed?command=predictions&a=chapel-hill&r=CM&s=autoldf_n"
+        API_TIME = "http://worldtimeapi.org/api/timezone/America/New_York"
 
-    mp = init()
+        mp = init()
 
-    while True:
-        try:
-            if not mp.network.is_connected:
-                print('Connection failed, reconnecting...')
-                mp.network.connect()
-        except Exception as error:
-            display(mp, 'Connect Error')
-            print(error)
+        while True:
+            try:
+                if not mp.network.is_connected:
+                    print('Connection failed, reconnecting...')
+                    mp.network.connect()
+            except Exception as error:
+                display(mp, 'Connect Error')
+                print(error)
 
-        current_time = fetch_json(mp, API_TIME)['datetime']
-        current_time = parse_time(current_time[11:16])
+            current_time = fetch_json(mp, API_TIME)['datetime']
+            current_time = parse_time(current_time[11:16])
 
-        if current_time < 6 * 60 + 30 or current_time > 22 * 60:
-            # Nightmode
-            display(mp, '')
-        else:
-            xml_string = fetch_text(mp, API_CM)
-            predictions_cm = parse_api(xml_string)
-            predictions_jfx = predict_jfx(current_time)
+            if current_time < 6 * 60 + 30 or current_time > 22 * 60:
+                # Nightmode
+                display(mp, '')
+            else:
+                xml_string = fetch_text(mp, API_CM)
+                predictions_cm = parse_api(xml_string)
+                predictions_jfx = predict_jfx(current_time)
 
-            text_to_display = f"CM  {predictions_cm}\nJFX {predictions_jfx}"
-            display(mp, text_to_display)
+                text_to_display = f"CM  {predictions_cm}\nJFX {predictions_jfx}"
+                display(mp, text_to_display)
 
-        time.sleep(30)
+            time.sleep(30)
+
+    # Global exception handling
+    except Exception as error:
+        display(mp, error)
+        print(error)
+
+        while True:
+            time.sleep(30)
 
 main()
