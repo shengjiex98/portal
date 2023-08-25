@@ -3,14 +3,21 @@
 
 import time
 import board
-import busio
-import displayio
 import terminalio
 from adafruit_matrixportal.matrixportal import MatrixPortal
 
 def init():
-    matrixportal = MatrixPortal(status_neopixel=board.NEOPIXEL, debug=True)
-    matrixportal.network.connect()
+    while True:
+        try:
+            # Display setup
+            matrixportal = MatrixPortal(status_neopixel=board.NEOPIXEL, debug=True)
+            matrixportal.network.connect()
+            break
+        except:
+            print('Connection failed, retrying in 10 sec')
+            time.sleep(10)
+    
+    print('Connected to WiFi')
 
     matrixportal.add_text(
         text_font=terminalio.FONT,
@@ -26,15 +33,23 @@ def display(matrixportal, text, delay):
     matrixportal.scroll_text(delay)
 
 def fetch_text(matrixportal, url):
-    r = matrixportal.network.requests.get(url)
-    text = r.text
-    r.close()
+    try:
+        r = matrixportal.network.requests.get(url)
+        text = r.text
+        r.close()
+    except Exception as error:
+        print(error)
+
     return text
 
 def fetch_json(matrixportal, url):
-    r = matrixportal.network.requests.get(url)
-    json = r.json()
-    r.close()
+    try:
+        r = matrixportal.network.requests.get(url)
+        json = r.json()
+        r.close()
+    except Exception as error:
+        print(error)
+
     return json
 
 def parse_api(xml_string):
@@ -57,7 +72,7 @@ def parse_api(xml_string):
 def parse_time(time_string):
     hours = int(time_string[0:2])
     minutes = int(time_string[3:5])
-    if hours == 12:
+    if time_string[-1] == 'M' and hours == 12:
         hours = 0
     if time_string[-2:] == 'PM':
         hours += 12
@@ -88,11 +103,18 @@ def main():
     mp = init()
 
     while True:
+        try:
+            if not mp.network.is_connected:
+                print('Connection failed, reconnecting...')
+                mp.network.connect()
+        except Exception as error:
+            print(error)
+
         current_time = fetch_json(mp, API_TIME)['datetime']
         current_time = parse_time(current_time[11:16])
 
-        # Nightmode
         if current_time < 6 * 60 + 30 or current_time > 22 * 60:
+            # Nightmode
             display(mp, '', DELAY)
         else:
             xml_string = fetch_text(mp, API_CM)
