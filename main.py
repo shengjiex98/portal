@@ -28,7 +28,7 @@ class BusPortal:
                 print('Connected to WiFi')
                 return
             except Exception as error:
-                self.display('Connect Error')
+                self.display('ConnectError')
                 print(error)
                 time.sleep(10)
 
@@ -119,9 +119,9 @@ def main():
                 current_time = portal.fetch_json(API_TIME)
                 xml_cm = portal.fetch_text(API_CM)
             except Exception as error:
-                portal.display('Fetch Error')
+                portal.display('FetchError')
                 print(error)
-                time.sleep(5)
+                time.sleep(30)
                 continue
 
             current_time = portal.parse_time(current_time['datetime'][11:16])
