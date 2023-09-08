@@ -99,7 +99,7 @@ class BusPortal:
         next_time = map(lambda x: x if x > 0 else x + 60 * 24, next_time)
         next_time = sorted(next_time)
         
-        next_time = f"{next_time[0]}" + (f",{next_time[1]}" if next_time[1] < 60 else '')
+        next_time = f"{next_time[0]}" + (f",{next_time[1]}" if next_time[1] < 99 else '')
         return next_time
 
 def main():
@@ -114,7 +114,6 @@ def main():
             if not portal.is_connected:
                 print('Connection failed, reconnecting...')
                 portal.connect()
-
             try:
                 current_time = portal.fetch_json(API_TIME)
                 xml_cm = portal.fetch_text(API_CM)
